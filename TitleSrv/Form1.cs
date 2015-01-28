@@ -99,10 +99,7 @@ namespace TitleSrv
                             //Check Clips has CG
                             if (Nd["graphics"] != null)
                             {
-                                 string Videofile = Nd["videofile"].InnerText;
-
-
-                              
+                                string Videofile = Nd["videofile"].InnerText;
 
 
 
@@ -114,7 +111,10 @@ namespace TitleSrv
 
 
 
-                              
+
+
+
+
                                 if (File.Exists(Videofile))
                                 {
                                     if (!Directory.Exists(ExportPath))
@@ -335,8 +335,23 @@ namespace TitleSrv
                     {
                         if (Nd["name"].InnerText == Ttl.Type)
                         {
-                            //Load main back config:
-                            BackFile = Nd["fixfile"].InnerText;
+                           // MessageBox.Show("fix:" + Nd["fixfile"].InnerText);
+                            //Find New Seq: 2015-01-28
+                            XmlNodeList SeqItems = XDoc.GetElementsByTagName("sequnce");
+                            foreach (XmlNode sq in SeqItems)
+                            {
+                               // MessageBox.Show(sq["name"].InnerText+ "=" + Nd["fixfile"].InnerText.ToLower());
+                               // MessageBox.Show("name: sq 2" + sq["name"].InnerText);
+                               // MessageBox.Show("file path" + sq["file"].InnerText);
+                                if (sq["name"].InnerText.ToLower() == Nd["fixfile"].InnerText.ToLower())
+                                {
+                                   // MessageBox.Show("backfile:"+sq["file"].InnerText);
+                                    BackFile = sq["file"].InnerText;
+                                }
+                            }
+                            //MessageBox.Show(BackFile);
+
+
                             FrameLeft = int.Parse(Nd["rect"]["left"].InnerText);
                             FrameTop = int.Parse(Nd["rect"]["top"].InnerText);
                             FrameWidth = int.Parse(Nd["rect"]["width"].InnerText);

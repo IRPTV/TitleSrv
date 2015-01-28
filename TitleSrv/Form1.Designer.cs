@@ -246,7 +246,7 @@
             this.MaximizeBox = false;
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "TITLE OVERLAY V1.5 2014-11-19";
+            this.Text = "TITLE OVERLAY V1.6 2015-01-28";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.Shown += new System.EventHandler(this.Form1_Shown);
             this.groupBox2.ResumeLayout(false);
