@@ -35,7 +35,6 @@ namespace TitleSrv
             string OutPutDir = ConfigurationSettings.AppSettings["OUTPUT"].ToString().Trim();
 
 
-
             string DirPathDest = ConfigurationSettings.AppSettings["CLEANVIDEOCHECK"].ToString().Trim();
             bool CLEANVIDEOCHECKEXIST = false;
             if (Directory.Exists(DirPathDest))
@@ -64,9 +63,7 @@ namespace TitleSrv
 
 
                     string ExportPath = OutPutDir + Dirs[Dirs.Length - 4] + "\\" + Dirs[Dirs.Length - 3] + "\\" + Dirs[Dirs.Length - 2] + "\\" + Dirs[Dirs.Length - 1].ToLower().Replace(".pspl", "");
-
-
-
+                    
 
                     StreamReader S = new StreamReader(Pspl);
                     string T = S.ReadToEnd();
@@ -74,9 +71,8 @@ namespace TitleSrv
                     T = T.Replace("’", "'");
                     T = T.Replace("“", "");
                     T = T.Replace("”", "");
-
-
-
+                    T = T.Replace("&", "&amp;");
+                    
 
                     S.Close();
                     StreamWriter SW = new StreamWriter(Pspl);
@@ -101,20 +97,6 @@ namespace TitleSrv
                             {
                                 string Videofile = Nd["videofile"].InnerText;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                                 if (File.Exists(Videofile))
                                 {
                                     if (!Directory.Exists(ExportPath))
@@ -135,8 +117,6 @@ namespace TitleSrv
                                         StreamWriter strW = new StreamWriter(ExportPath + "\\" + Path.GetFileName(Videofile).Replace(".mp4", "_CG.xml").Replace(".mpg", "_CG.xml"));
                                         strW.Write(Nd["graphics"].InnerXml);
                                         strW.Close();
-
-
 
 
                                         Title Ttl = new Title();
@@ -308,9 +288,6 @@ namespace TitleSrv
             string Line1Color = "";
 
 
-
-
-
             //HeaderConfig:
             int Line2Left = 0;
             int Line2Top = 0;
@@ -319,8 +296,6 @@ namespace TitleSrv
             string Line2FontName = "";
             int Line2FontSize = 0;
             string Line2Color = "";
-
-
 
 
             XmlDocument XDoc = new XmlDocument();
@@ -391,12 +366,7 @@ namespace TitleSrv
 
                                         Line1Color = Rgb2Hex(int.Parse(TextNd["color"]["red"].InnerText), int.Parse(TextNd["color"]["green"].InnerText), int.Parse(TextNd["color"]["blue"].InnerText));
                                     }
-
-
-
-
-
-
+                                    
 
                                     //If Text is Line2:
                                     if (TextNd["id"].InnerText == "Line2")
@@ -467,7 +437,6 @@ namespace TitleSrv
 
                 return (Bitmap)mainImage;
             }
-
 
         }
         protected string Rgb2Hex(int Red, int Green, int Blue)
@@ -701,12 +670,10 @@ namespace TitleSrv
                     {
                         Directory.Delete(directory, false);
                     }
-
                 }
             }
             catch
             { }
-
         }
 
         private void Form1_Shown(object sender, EventArgs e)
