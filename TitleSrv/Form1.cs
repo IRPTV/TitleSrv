@@ -393,11 +393,11 @@ namespace TitleSrv
             //Bitmap bmp = new Bitmap(@"C:\Users\Administrator\Desktop\Title\vlcsnap-2014-06-08-12h59m21s190.png");
             Bitmap bmp = new Bitmap(1920, 1080);
             bmp = OverlayBitmap(bmp, Path.GetDirectoryName(Application.ExecutablePath) + "\\cg\\" + Path.GetFileName(BackFile), FrameLeft, FrameTop, FrameWidth, FrameHeight);
-            if (Ttl.Header != null)
-            {
-                bmp = GenerateImage(bmp, Ttl.Header, HeaderWidth, HeaderHeight, HeaderFontSize, HeaderFontName, HeaderColor, FrameLeft + HeaderLeft, FrameTop + HeaderTop, FontStyle.Regular, true);
+            //if (Ttl.Header != null)
+            //{
+            //    bmp = GenerateImage(bmp, Ttl.Header, HeaderWidth, HeaderHeight, HeaderFontSize, HeaderFontName, HeaderColor, FrameLeft + HeaderLeft, FrameTop + HeaderTop, FontStyle.Regular, true);
 
-            }
+            //}
 
             if (Ttl.Line1 != null)
             {
