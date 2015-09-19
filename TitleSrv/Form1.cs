@@ -65,7 +65,7 @@ namespace TitleSrv
                     string ExportPath = OutPutDir + Dirs[Dirs.Length - 4] + "\\" + Dirs[Dirs.Length - 3] + "\\" + Dirs[Dirs.Length - 2] + "\\" + Dirs[Dirs.Length - 1].ToLower().Replace(".pspl", "");
                     
 
-                    StreamReader S = new StreamReader(Pspl);
+                    StreamReader S = new StreamReader(Pspl,Encoding.Unicode);
                     string T = S.ReadToEnd();
                     T = T.Replace("'", "'");
                     T = T.Replace("’", "'");
@@ -75,7 +75,7 @@ namespace TitleSrv
                     
 
                     S.Close();
-                    StreamWriter SW = new StreamWriter(Pspl);
+                    StreamWriter SW = new StreamWriter(Pspl, false, Encoding.Unicode);
                     SW.Write(T);
                     SW.Close();
 
@@ -114,7 +114,7 @@ namespace TitleSrv
 
                                         //2014-11-19 
                                         //Save graphic node for each video file for story board software
-                                        StreamWriter strW = new StreamWriter(ExportPath + "\\" + Path.GetFileName(Videofile).Replace(".mp4", "_CG.xml").Replace(".mpg", "_CG.xml"));
+                                        StreamWriter strW = new StreamWriter(ExportPath + "\\" + Path.GetFileName(Videofile).Replace(".mp4", "_CG.xml").Replace(".mpg", "_CG.xml"),false,Encoding.Unicode);
                                         strW.Write(Nd["graphics"].InnerXml);
                                         strW.Close();
 
