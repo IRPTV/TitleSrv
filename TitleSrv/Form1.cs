@@ -21,242 +21,250 @@ namespace TitleSrv
         {
             InitializeComponent();
         }
-
         private void Form1_Load(object sender, EventArgs e)
         {
             // button1_Click(new object(), new EventArgs());
         }
         protected void ProcessTitles()
         {
-            timer1.Enabled = false;
-
-            string DateTimeStr = string.Format("{0:0000}", DateTime.Now.Year) + "-" + string.Format("{0:00}", DateTime.Now.Month) + "-" + string.Format("{0:00}", DateTime.Now.Day);
-
-            string OutPutDir = ConfigurationSettings.AppSettings["OUTPUT"].ToString().Trim();
-
-
-            string DirPathDest = ConfigurationSettings.AppSettings["CLEANVIDEOCHECK"].ToString().Trim();
-            bool CLEANVIDEOCHECKEXIST = false;
-            if (Directory.Exists(DirPathDest))
-            {
-                CLEANVIDEOCHECKEXIST = true;
-            }
-
-            if (CLEANVIDEOCHECKEXIST)
+            try
             {
 
-                string[] PlayList = Directory.GetFiles(ConfigurationSettings.AppSettings["PSPSL"].ToString().Trim(), "*.pspl", SearchOption.AllDirectories);
-                if (PlayList.Length == 0)
+                timer1.Enabled = false;
+
+                string DateTimeStr = string.Format("{0:0000}", DateTime.Now.Year) + "-" + string.Format("{0:00}", DateTime.Now.Month) + "-" + string.Format("{0:00}", DateTime.Now.Day);
+
+                string OutPutDir = ConfigurationSettings.AppSettings["OUTPUT"].ToString().Trim();
+
+
+                string DirPathDest = ConfigurationSettings.AppSettings["CLEANVIDEOCHECK"].ToString().Trim();
+                bool CLEANVIDEOCHECKEXIST = false;
+                if (Directory.Exists(DirPathDest))
                 {
-                    LogWriter("Playlist directory is empty");
+                    CLEANVIDEOCHECKEXIST = true;
                 }
 
-                label5.Text = PlayList.Length.ToString();
-
-                foreach (string Pspl in PlayList)
+                if (CLEANVIDEOCHECKEXIST)
                 {
-                    string TmpRoot = Path.GetDirectoryName(Application.ExecutablePath) + "\\";
-                    XmlDocument XDoc = new XmlDocument();
-                    string XmlPath = Pspl;
 
-                    string[] Dirs = Pspl.Split("\\".ToCharArray());
-
-
-                    string ExportPath = OutPutDir + Dirs[Dirs.Length - 4] + "\\" + Dirs[Dirs.Length - 3] + "\\" + Dirs[Dirs.Length - 2] + "\\" + Dirs[Dirs.Length - 1].ToLower().Replace(".pspl", "");
-                    
-
-                    StreamReader S = new StreamReader(Pspl,Encoding.Unicode);
-                    string T = S.ReadToEnd();
-                    T = T.Replace("'", "'");
-                    T = T.Replace("’", "'");
-                    T = T.Replace("“", "");
-                    T = T.Replace("”", "");
-                    T = T.Replace("&", "&amp;");
-                    
-
-                    S.Close();
-                    StreamWriter SW = new StreamWriter(Pspl, false, Encoding.Unicode);
-                    SW.Write(T);
-                    SW.Close();
-
-                    LogWriter("PlayList: " + Pspl);
-                    if (File.Exists(XmlPath))
+                    string[] PlayList = Directory.GetFiles(ConfigurationSettings.AppSettings["PSPSL"].ToString().Trim(), "*.pspl", SearchOption.AllDirectories);
+                    if (PlayList.Length == 0)
                     {
-                        XDoc.Load(XmlPath);
+                        LogWriter("Playlist directory is empty");
+                    }
+
+                    label5.Text = PlayList.Length.ToString();
+
+                    foreach (string Pspl in PlayList)
+                    {
+                        string TmpRoot = Path.GetDirectoryName(Application.ExecutablePath) + "\\";
+                        XmlDocument XDoc = new XmlDocument();
+                        string XmlPath = Pspl;
+
+                        string[] Dirs = Pspl.Split("\\".ToCharArray());
 
 
-                        //Load Clips
-                        XmlNodeList Items = XDoc.GetElementsByTagName("clip");
-                        int ClipIndx = 1;
-                        foreach (XmlNode Nd in Items)
+                        string ExportPath = OutPutDir + Dirs[Dirs.Length - 4] + "\\" + Dirs[Dirs.Length - 3] + "\\" + Dirs[Dirs.Length - 2] + "\\" + Dirs[Dirs.Length - 1].ToLower().Replace(".pspl", "");
+
+
+                        StreamReader S = new StreamReader(Pspl, Encoding.Unicode);
+                        string T = S.ReadToEnd();
+                        T = T.Replace("'", "'");
+                        T = T.Replace("’", "'");
+                        T = T.Replace("“", "");
+                        T = T.Replace("”", "");
+                        T = T.Replace("&", "&amp;");
+
+
+                        S.Close();
+                        StreamWriter SW = new StreamWriter(Pspl, false, Encoding.Unicode);
+                        SW.Write(T);
+                        SW.Close();
+
+                        LogWriter("PlayList: " + Pspl);
+                        if (File.Exists(XmlPath))
                         {
-                            label6.Text = (Items.Count - ClipIndx).ToString();
-                            ClipIndx++;
-                            //Check Clips has CG
-                            if (Nd["graphics"] != null)
+                            XDoc.Load(XmlPath);
+
+
+                            //Load Clips
+                            XmlNodeList Items = XDoc.GetElementsByTagName("clip");
+                            int ClipIndx = 1;
+                            foreach (XmlNode Nd in Items)
                             {
-                                string Videofile = Nd["videofile"].InnerText;
-
-                                if (File.Exists(Videofile))
+                                label6.Text = (Items.Count - ClipIndx).ToString();
+                                ClipIndx++;
+                                //Check Clips has CG
+                                if (Nd["graphics"] != null)
                                 {
-                                    if (!Directory.Exists(ExportPath))
+                                    string Videofile = Nd["videofile"].InnerText;
+
+                                    if (File.Exists(Videofile))
                                     {
-                                        Directory.CreateDirectory(ExportPath);
-                                    }
-                                    if (!File.Exists(ExportPath + "\\" + Path.GetFileName(Videofile)))
-                                    {
-
-
-                                        LogWriter("Video: " + Videofile);
-                                        XmlNodeList GItems = Nd["graphics"].GetElementsByTagName("gitem");
-
-
-
-                                        //2014-11-19 
-                                        //Save graphic node for each video file for story board software
-                                        StreamWriter strW = new StreamWriter(ExportPath + "\\" + Path.GetFileName(Videofile).Replace(".mp4", "_CG.xml").Replace(".mpg", "_CG.xml"),false,Encoding.Unicode);
-                                        strW.Write(Nd["graphics"].InnerXml);
-                                        strW.Close();
-
-
-                                        Title Ttl = new Title();
-                                        List<Title> TtlList = new List<Title>();
-
-
-                                        //Create List of CG items:
-                                        foreach (XmlNode GNode in GItems)
+                                        if (!Directory.Exists(ExportPath))
                                         {
-                                            #region CreateTitleObject
-                                            if (GNode["com"].InnerText == "2")
-                                            {
-                                                Ttl = new Title();
-                                                Ttl.Start = int.Parse(GNode["timecode"].InnerText);
-                                                if (GNode["arguments"].GetElementsByTagName("Header")[0] != null)
-                                                {
+                                            Directory.CreateDirectory(ExportPath);
+                                        }
+                                        if (!File.Exists(ExportPath + "\\" + Path.GetFileName(Videofile)))
+                                        {
 
-                                                    Ttl.Header = GNode["arguments"].GetElementsByTagName("Header")[0].InnerText;
-                                                }
-                                                if (GNode["arguments"].GetElementsByTagName("Line1")[0] != null)
+
+                                            LogWriter("Video: " + Videofile);
+                                            XmlNodeList GItems = Nd["graphics"].GetElementsByTagName("gitem");
+
+
+
+                                            //2014-11-19 
+                                            //Save graphic node for each video file for story board software
+                                            StreamWriter strW = new StreamWriter(ExportPath + "\\" + Path.GetFileName(Videofile).Replace(".mp4", "_CG.xml").Replace(".mpg", "_CG.xml"), false, Encoding.Unicode);
+                                            strW.Write(Nd["graphics"].InnerXml);
+                                            strW.Close();
+
+
+                                            Title Ttl = new Title();
+                                            List<Title> TtlList = new List<Title>();
+
+
+                                            //Create List of CG items:
+                                            foreach (XmlNode GNode in GItems)
+                                            {
+                                                #region CreateTitleObject
+                                                if (GNode["com"].InnerText == "2")
                                                 {
-                                                    Ttl.Line1 = GNode["arguments"].GetElementsByTagName("Line1")[0].InnerText;
-                                                }
-                                                if (GNode["arguments"].GetElementsByTagName("Line2")[0] != null)
-                                                {
-                                                    if (GNode["arguments"].GetElementsByTagName("Line2")[0].InnerText.Trim().Length > 1)
+                                                    Ttl = new Title();
+                                                    Ttl.Start = int.Parse(GNode["timecode"].InnerText);
+                                                    if (GNode["arguments"].GetElementsByTagName("Header")[0] != null)
                                                     {
-                                                        Ttl.Line2 = GNode["arguments"].GetElementsByTagName("Line2")[0].InnerText;
+
+                                                        Ttl.Header = GNode["arguments"].GetElementsByTagName("Header")[0].InnerText;
+                                                    }
+                                                    if (GNode["arguments"].GetElementsByTagName("Line1")[0] != null)
+                                                    {
+                                                        Ttl.Line1 = GNode["arguments"].GetElementsByTagName("Line1")[0].InnerText;
+                                                    }
+                                                    if (GNode["arguments"].GetElementsByTagName("Line2")[0] != null)
+                                                    {
+                                                        if (GNode["arguments"].GetElementsByTagName("Line2")[0].InnerText.Trim().Length > 1)
+                                                        {
+                                                            Ttl.Line2 = GNode["arguments"].GetElementsByTagName("Line2")[0].InnerText;
+                                                        }
+                                                    }
+
+                                                    if (GNode["name"] != null)
+                                                    {
+                                                        Ttl.Type = GNode["name"].InnerText;
                                                     }
                                                 }
 
-                                                if (GNode["name"] != null)
+                                                if (GNode["com"].InnerText == "6")
                                                 {
-                                                    Ttl.Type = GNode["name"].InnerText;
+                                                    Ttl.End = int.Parse(GNode["timecode"].InnerText);
+                                                    TtlList.Add(Ttl);
                                                 }
+                                                #endregion
+
                                             }
 
-                                            if (GNode["com"].InnerText == "6")
+                                            if (!Directory.Exists(TmpRoot + "\\TMP\\"))
                                             {
-                                                Ttl.End = int.Parse(GNode["timecode"].InnerText);
-                                                TtlList.Add(Ttl);
+                                                Directory.CreateDirectory(TmpRoot + "\\TMP\\");
+                                                LogWriter("TMP directory Created");
+
                                             }
-                                            #endregion
+                                            string[] TmpFiles = Directory.GetFiles(TmpRoot + "\\TMP\\");
+                                            foreach (string item in TmpFiles)
+                                            {
+                                                try
+                                                {
+                                                    File.Delete(item);
+                                                }
+                                                catch
+                                                {
+
+                                                }
+                                                LogWriter("TMP Directory Cleaned");
+                                            }
+                                            // Directory.Delete(TmpRoot + "\\TMP\\");
+
+                                            //if (!Directory.Exists(TmpRoot + "\\TMP\\"))
+                                            //{
+
+                                            //}
+                                            //Local Video File:
+                                            string TmpFile = TmpRoot + "\\TMP\\" + Path.GetFileName(Videofile);
+                                            LogWriter("Start Local File:");
+                                            LogWriter("From:" + Videofile);
+                                            LogWriter("To:" + TmpFile);
+                                            File.Copy(Videofile, TmpFile, true);
+                                            LogWriter("End Local File");
+                                            string ListImages = "";
+                                            string ListFilters = "";
+
+
+                                            //Create Script:
+                                            int i = 1;
+                                            foreach (Title item in TtlList)
+                                            {
+                                                Bitmap bmp = LoadCgConfig(item);
+                                                //Create Image of CG Item:
+                                                bmp.Save(TmpRoot + "\\TMP\\" + "Title" + i + ".png");
+                                                LogWriter("Image Saved: " + TmpRoot + "\\TMP\\" + "Title" + i + ".png");
+                                                ListImages += " -i " + " \"" + TmpRoot + "\\TMP\\" + "Title" + i + ".png" + "\" ";
+
+                                                //[0:v][1:v] overlay=10:10:enable='between(t,1,4)' [tmp]; [tmp][2:v] overlay=20:20:enable='between(t,5,8)' [tmp2];[tmp2][3:v] overlay=20:20:enable='between(t,9,13)'
+
+                                                if (i == 1)
+                                                {
+                                                    ListFilters += "[0:v][1:v] overlay=0:0:enable='between(t," + Frame2Sec((double)item.Start) + "," + Frame2Sec((double)item.End) + ")'";
+                                                }
+                                                else
+                                                {
+                                                    ListFilters += " [tmp" + (i - 1) + "]; [tmp" + (i - 1) + "][" + i + ":v] overlay=0:0:enable='between(t," + Frame2Sec((double)item.Start) + "," + Frame2Sec((double)item.End) + ")' ";
+                                                }
+                                                //Overlay alpha video on clean video                           
+                                                i++;
+                                            }
+
+
+                                            Overlay(TmpFile, ListImages, ListFilters, ExportPath + "\\" + Path.GetFileName(Videofile));
+
+                                            //Copy Final Video to Dest directory:
 
                                         }
-
-                                        if (!Directory.Exists(TmpRoot + "\\TMP\\"))
+                                        else
                                         {
-                                            Directory.CreateDirectory(TmpRoot + "\\TMP\\");
-                                            LogWriter("TMP directory Created");
-
+                                            LogWriter("Video Exist In OutPut Directory: " + Videofile);
                                         }
-                                        string[] TmpFiles = Directory.GetFiles(TmpRoot + "\\TMP\\");
-                                        foreach (string item in TmpFiles)
-                                        {
-                                            try
-                                            {
-                                                File.Delete(item);
-                                            }
-                                            catch
-                                            {
-
-                                            }
-                                            LogWriter("TMP Directory Cleaned");
-                                        }
-                                        // Directory.Delete(TmpRoot + "\\TMP\\");
-
-                                        //if (!Directory.Exists(TmpRoot + "\\TMP\\"))
-                                        //{
-
-                                        //}
-                                        //Local Video File:
-                                        string TmpFile = TmpRoot + "\\TMP\\" + Path.GetFileName(Videofile);
-                                        LogWriter("Start Local File:");
-                                        LogWriter("From:" + Videofile);
-                                        LogWriter("To:" + TmpFile);
-                                        File.Copy(Videofile, TmpFile, true);
-                                        LogWriter("End Local File");
-                                        string ListImages = "";
-                                        string ListFilters = "";
-
-
-                                        //Create Script:
-                                        int i = 1;
-                                        foreach (Title item in TtlList)
-                                        {
-                                            Bitmap bmp = LoadCgConfig(item);
-                                            //Create Image of CG Item:
-                                            bmp.Save(TmpRoot + "\\TMP\\" + "Title" + i + ".png");
-                                            LogWriter("Image Saved: " + TmpRoot + "\\TMP\\" + "Title" + i + ".png");
-                                            ListImages += " -i " + " \"" + TmpRoot + "\\TMP\\" + "Title" + i + ".png" + "\" ";
-
-                                            //[0:v][1:v] overlay=10:10:enable='between(t,1,4)' [tmp]; [tmp][2:v] overlay=20:20:enable='between(t,5,8)' [tmp2];[tmp2][3:v] overlay=20:20:enable='between(t,9,13)'
-
-                                            if (i == 1)
-                                            {
-                                                ListFilters += "[0:v][1:v] overlay=0:0:enable='between(t," + Frame2Sec((double)item.Start) + "," + Frame2Sec((double)item.End) + ")'";
-                                            }
-                                            else
-                                            {
-                                                ListFilters += " [tmp" + (i - 1) + "]; [tmp" + (i - 1) + "][" + i + ":v] overlay=0:0:enable='between(t," + Frame2Sec((double)item.Start) + "," + Frame2Sec((double)item.End) + ")' ";
-                                            }
-                                            //Overlay alpha video on clean video                           
-                                            i++;
-                                        }
-
-
-                                        Overlay(TmpFile, ListImages, ListFilters, ExportPath + "\\" + Path.GetFileName(Videofile));
-
-                                        //Copy Final Video to Dest directory:
-
                                     }
                                     else
                                     {
-                                        LogWriter("Video Exist In OutPut Directory: " + Videofile);
+                                        LogWriter("Clean Video Not Exist:");
+                                        LogWriter(Videofile);
                                     }
                                 }
-                                else
-                                {
-                                    LogWriter("Clean Video Not Exist:");
-                                    LogWriter(Videofile);
-                                }
                             }
+
                         }
-
+                        File.Delete(Pspl);
+                        LogWriter("Delete PlayList:" + Pspl);
                     }
-                    File.Delete(Pspl);
-                    LogWriter("Delete PlayList:" + Pspl);
+
+
+                    processDirectory(OutPutDir, "*.mp4");
+                    processDirectory(OutPutDir, "*.xml");
+                    processDirectory(ConfigurationSettings.AppSettings["PSPSL"].ToString().Trim(), "*.pspl");
+                    timer1.Enabled = true;
                 }
-
-
-                processDirectory(OutPutDir, "*.mp4");
-                processDirectory(OutPutDir, "*.xml");
-                processDirectory(ConfigurationSettings.AppSettings["PSPSL"].ToString().Trim(), "*.pspl");
-                timer1.Enabled = true;
+                else
+                {
+                    timer1.Enabled = true;
+                    LogWriter("Software could not connect to:" + ConfigurationSettings.AppSettings["CLEANVIDEOCHECK"].ToString().Trim());
+                }
             }
-            else
+            catch (Exception exp)
             {
+                LogWriter(exp.Message);
                 timer1.Enabled = true;
-                LogWriter("Software could not connect to:" + ConfigurationSettings.AppSettings["CLEANVIDEOCHECK"].ToString().Trim());
             }
         }
         protected Bitmap LoadCgConfig(Title Ttl)
@@ -310,17 +318,17 @@ namespace TitleSrv
                     {
                         if (Nd["name"].InnerText == Ttl.Type)
                         {
-                           // MessageBox.Show("fix:" + Nd["fixfile"].InnerText);
+                            // MessageBox.Show("fix:" + Nd["fixfile"].InnerText);
                             //Find New Seq: 2015-01-28
                             XmlNodeList SeqItems = XDoc.GetElementsByTagName("sequnce");
                             foreach (XmlNode sq in SeqItems)
                             {
-                               // MessageBox.Show(sq["name"].InnerText+ "=" + Nd["fixfile"].InnerText.ToLower());
-                               // MessageBox.Show("name: sq 2" + sq["name"].InnerText);
-                               // MessageBox.Show("file path" + sq["file"].InnerText);
+                                // MessageBox.Show(sq["name"].InnerText+ "=" + Nd["fixfile"].InnerText.ToLower());
+                                // MessageBox.Show("name: sq 2" + sq["name"].InnerText);
+                                // MessageBox.Show("file path" + sq["file"].InnerText);
                                 if (sq["name"].InnerText.ToLower() == Nd["fixfile"].InnerText.ToLower())
                                 {
-                                   // MessageBox.Show("backfile:"+sq["file"].InnerText);
+                                    // MessageBox.Show("backfile:"+sq["file"].InnerText);
                                     BackFile = sq["file"].InnerText;
                                 }
                             }
@@ -366,7 +374,7 @@ namespace TitleSrv
 
                                         Line1Color = Rgb2Hex(int.Parse(TextNd["color"]["red"].InnerText), int.Parse(TextNd["color"]["green"].InnerText), int.Parse(TextNd["color"]["blue"].InnerText));
                                     }
-                                    
+
 
                                     //If Text is Line2:
                                     if (TextNd["id"].InnerText == "Line2")
@@ -393,11 +401,13 @@ namespace TitleSrv
             //Bitmap bmp = new Bitmap(@"C:\Users\Administrator\Desktop\Title\vlcsnap-2014-06-08-12h59m21s190.png");
             Bitmap bmp = new Bitmap(1920, 1080);
             bmp = OverlayBitmap(bmp, Path.GetDirectoryName(Application.ExecutablePath) + "\\cg\\" + Path.GetFileName(BackFile), FrameLeft, FrameTop, FrameWidth, FrameHeight);
-            //if (Ttl.Header != null)
-            //{
-            //    bmp = GenerateImage(bmp, Ttl.Header, HeaderWidth, HeaderHeight, HeaderFontSize, HeaderFontName, HeaderColor, FrameLeft + HeaderLeft, FrameTop + HeaderTop, FontStyle.Regular, true);
-
-            //}
+            if (Ttl.Header != null)
+            {
+                if (Ttl.Header.Trim().Length>3)
+                {
+                    bmp = GenerateImage(bmp, Ttl.Header, HeaderWidth, HeaderHeight, HeaderFontSize, HeaderFontName, HeaderColor, FrameLeft + HeaderLeft, FrameTop + HeaderTop, FontStyle.Regular, true);
+                }
+            }
 
             if (Ttl.Line1 != null)
             {
@@ -451,49 +461,57 @@ namespace TitleSrv
         }
         protected void Overlay(string CleanVideo, string OverlayFiles, string Filters, string OutFile)
         {
-            label3.Text = DateTime.Now.ToString();
-            label4.Text = "";
-            LogWriter("Start Create Video");
-            //ffmpeg64 -i 4.mp4 -i title.png -i title2.png -i title3.png -filter_complex "[0:v][1:v] overlay=10:10:enable='between(t,1,4)' [tmp]; [tmp][2:v] overlay=20:20:enable='between(t,5,8)' [tmp2];[tmp2][3:v] overlay=20:20:enable='between(t,9,13)'" output4.mp4
-            Process proc = new Process();
-
-            //if (Environment.Is64BitOperatingSystem)
-            //{
-            proc.StartInfo.FileName = Path.GetDirectoryName(Application.ExecutablePath) + "//ffmpeg";
-            //}
-            //else
-            //{
-            //    proc.StartInfo.FileName = Path.GetDirectoryName(Application.ExecutablePath) + "//ffmpeg32";
-            //}
-
-            OutFile = OutFile.Replace(".MP4", "_CG.MP4").Replace(".mp4", "_CG.mp4");
-            proc.StartInfo.Arguments = "  -i " + "  \"" + CleanVideo + "\"  " + OverlayFiles + "  -filter_complex  " + "\"" + Filters + "\"" + "  -vb 12M   -y  " + "   \"" + OutFile + "\"";
-
-            label1.Text = OutFile;
-            //  textBox1.Text = proc.StartInfo.Arguments;
-            proc.StartInfo.RedirectStandardError = true;
-            proc.StartInfo.UseShellExecute = false;
-            proc.StartInfo.CreateNoWindow = true;
-            proc.EnableRaisingEvents = true;
-            proc.Start();
-            proc.PriorityClass = ProcessPriorityClass.Normal;
-            StreamReader reader = proc.StandardError;
-            string line;
-            while ((line = reader.ReadLine()) != null)
+            try
             {
-                //if (richTextBox1.Lines.Length > 5)
+                label3.Text = DateTime.Now.ToString();
+                label4.Text = "";
+                LogWriter("Start Create Video");
+                //ffmpeg64 -i 4.mp4 -i title.png -i title2.png -i title3.png -filter_complex "[0:v][1:v] overlay=10:10:enable='between(t,1,4)' [tmp]; [tmp][2:v] overlay=20:20:enable='between(t,5,8)' [tmp2];[tmp2][3:v] overlay=20:20:enable='between(t,9,13)'" output4.mp4
+                Process proc = new Process();
+
+                //if (Environment.Is64BitOperatingSystem)
                 //{
-                //    richTextBox1.Text = "";
+                proc.StartInfo.FileName = Path.GetDirectoryName(Application.ExecutablePath) + "//ffmpeg";
                 //}
-                LogWriter(line);
-                //richTextBox1.Text += (line) + " \n";
-                //richTextBox1.SelectionStart = richTextBox1.Text.Length;
-                //richTextBox1.ScrollToCaret();
-                //Application.DoEvents();
+                //else
+                //{
+                //    proc.StartInfo.FileName = Path.GetDirectoryName(Application.ExecutablePath) + "//ffmpeg32";
+                //}
+
+                OutFile = OutFile.Replace(".MP4", "_CG.MP4").Replace(".mp4", "_CG.mp4");
+                proc.StartInfo.Arguments = "  -i " + "  \"" + CleanVideo + "\"  " + OverlayFiles + "  -filter_complex  " + "\"" + Filters + "\"" + "  -vb 12M   -y  " + "   \"" + OutFile + "\"";
+
+                label1.Text = OutFile;
+                //  textBox1.Text = proc.StartInfo.Arguments;
+                proc.StartInfo.RedirectStandardError = true;
+                proc.StartInfo.UseShellExecute = false;
+                proc.StartInfo.CreateNoWindow = true;
+                proc.EnableRaisingEvents = true;
+                proc.Start();
+                proc.PriorityClass = ProcessPriorityClass.Normal;
+                StreamReader reader = proc.StandardError;
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    //if (richTextBox1.Lines.Length > 5)
+                    //{
+                    //    richTextBox1.Text = "";
+                    //}
+                    LogWriter(line);
+                    //richTextBox1.Text += (line) + " \n";
+                    //richTextBox1.SelectionStart = richTextBox1.Text.Length;
+                    //richTextBox1.ScrollToCaret();
+                    //Application.DoEvents();
+                }
+                proc.Close();
+                label4.Text = DateTime.Now.ToString();
+                LogWriter("End Create Video");
             }
-            proc.Close();
-            label4.Text = DateTime.Now.ToString();
-            LogWriter("End Create Video");
+
+            catch (Exception exp)
+            {
+                LogWriter(exp.Message);
+            }
         }
         protected Bitmap GenerateImage(Bitmap BackImage, string Text, int Width, int Height, int FontSize, string FontName, string ColorCode, int IndentLeft, int IndentTop, FontStyle FntStyle, bool IsHeader)
         {
@@ -517,90 +535,97 @@ namespace TitleSrv
             float fontSize = FontSize;
 
             Bitmap bmp = BackImage;
-            Graphics g = Graphics.FromImage(bmp);
-
-
-            //      TextFormatFlags flags = TextFormatFlags.Left |
-            //TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak;
-
-            //this will center align our text at the bottom of the image
-            StringFormat sf = new StringFormat();
-
-            if (IsHeader)
+            try
             {
-                sf.LineAlignment = StringAlignment.Center;
-                sf.Alignment = StringAlignment.Center;
+                Graphics g = Graphics.FromImage(bmp);
+
+
+                //      TextFormatFlags flags = TextFormatFlags.Left |
+                //TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak;
+
+                //this will center align our text at the bottom of the image
+                StringFormat sf = new StringFormat();
+
+                //if (IsHeader)
+                //{
+                //    sf.LineAlignment = StringAlignment.Center;
+                //    sf.Alignment = StringAlignment.Center;
+                //}
+                //else
+                {
+                    sf.LineAlignment = StringAlignment.Center;
+                    sf.Alignment = StringAlignment.Near;
+                }
+                // sf.FormatFlags = (StringFormatFlags)flags;
+
+
+
+
+                //define a font to use.
+                //   Font f = new Font("Context Reprise SSi", fontSize, FontStyle.Bold, GraphicsUnit.Pixel);
+                Font f = new Font(FontName, fontSize, FntStyle, GraphicsUnit.Point);
+                //if (FontName == "Context Reprise ExtraBlack SSi")
+                //{
+                //    f = new Font(FontName, fontSize, GraphicsUnit.Pixel);
+                //}
+
+                //pen for outline - set width parameter
+                //Pen p = new Pen(ColorTranslator.FromHtml("#000000"), 3);
+                Pen p = new Pen(ColorTranslator.FromHtml(ColorCode), 0);
+                p.LineJoin = LineJoin.Round; //prevent "spikes" at the path
+
+                //this makes the gradient repeat for each text line
+                //Rectangle fr = new Rectangle(0, bmp.Height - f.Height, bmp.Width, f.Height);
+                Rectangle fr = new Rectangle(0, 0, Width, Height);
+                LinearGradientBrush b = new LinearGradientBrush(fr,
+                                                                ColorTranslator.FromHtml(ColorCode),
+                                                                ColorTranslator.FromHtml(ColorCode),
+                                                                90);
+
+                //this will be the rectangle used to draw and auto-wrap the text.
+                //basically = image size
+                Rectangle r = new Rectangle(IndentLeft, IndentTop, Width, Height);
+
+
+                GraphicsPath gp = new GraphicsPath();
+
+                //look mom! no pre-wrapping!
+                gp.AddString(Text,
+                             f.FontFamily, (int)f.Style, fontSize, r, sf);
+
+                //these affect lines such as those in paths. Textrenderhint doesn't affect
+                //text in a path as it is converted to ..well, a path.    
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
+
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit; // <-- important!
+                g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                g.TextContrast = 0;
+                //TODO: shadow -> g.translate, fillpath once, remove translate
+
+
+                //var matrix = new Matrix();
+                //matrix.Translate(10, 10);
+                //g.Transform=matrix;
+                g.DrawPath(p, gp);
+                g.FillPath(b, gp);
+
+                //cleanup
+                gp.Dispose();
+                b.Dispose();
+                b.Dispose();
+                f.Dispose();
+                sf.Dispose();
+                g.Dispose();
             }
-            else
+            catch (Exception exp)
             {
-                sf.LineAlignment = StringAlignment.Center;
-                sf.Alignment = StringAlignment.Near;
+                LogWriter(exp.Message);
             }
-            // sf.FormatFlags = (StringFormatFlags)flags;
-
-
-
-
-            //define a font to use.
-            //   Font f = new Font("Context Reprise SSi", fontSize, FontStyle.Bold, GraphicsUnit.Pixel);
-            Font f = new Font(FontName, fontSize, FntStyle, GraphicsUnit.Point);
-            //if (FontName == "Context Reprise ExtraBlack SSi")
-            //{
-            //    f = new Font(FontName, fontSize, GraphicsUnit.Pixel);
-            //}
-
-            //pen for outline - set width parameter
-            //Pen p = new Pen(ColorTranslator.FromHtml("#000000"), 3);
-            Pen p = new Pen(ColorTranslator.FromHtml(ColorCode), 0);
-            p.LineJoin = LineJoin.Round; //prevent "spikes" at the path
-
-            //this makes the gradient repeat for each text line
-            //Rectangle fr = new Rectangle(0, bmp.Height - f.Height, bmp.Width, f.Height);
-            Rectangle fr = new Rectangle(0, 0, Width, Height);
-            LinearGradientBrush b = new LinearGradientBrush(fr,
-                                                            ColorTranslator.FromHtml(ColorCode),
-                                                            ColorTranslator.FromHtml(ColorCode),
-                                                            90);
-
-            //this will be the rectangle used to draw and auto-wrap the text.
-            //basically = image size
-            Rectangle r = new Rectangle(IndentLeft, IndentTop, Width, Height);
-
-
-            GraphicsPath gp = new GraphicsPath();
-
-            //look mom! no pre-wrapping!
-            gp.AddString(Text,
-                         f.FontFamily, (int)f.Style, fontSize, r, sf);
-
-            //these affect lines such as those in paths. Textrenderhint doesn't affect
-            //text in a path as it is converted to ..well, a path.    
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-
-
-            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit; // <-- important!
-            g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-            g.TextContrast = 0;
-            //TODO: shadow -> g.translate, fillpath once, remove translate
-
-
-            //var matrix = new Matrix();
-            //matrix.Translate(10, 10);
-            //g.Transform=matrix;
-            g.DrawPath(p, gp);
-            g.FillPath(b, gp);
-
-            //cleanup
-            gp.Dispose();
-            b.Dispose();
-            b.Dispose();
-            f.Dispose();
-            sf.Dispose();
-            g.Dispose();
             return bmp;
 
 
@@ -635,20 +660,24 @@ namespace TitleSrv
         }
         private static void processDirectory(string startLocation, string SearchPattern)
         {
-            foreach (var directory in Directory.GetDirectories(startLocation))
+            try
             {
-                processDirectory(directory, SearchPattern);
-                if (Directory.GetFiles(directory, SearchPattern).Length == 0 &&
-                    Directory.GetDirectories(directory).Length == 0)
+                foreach (var directory in Directory.GetDirectories(startLocation))
                 {
-                    string[] Files = Directory.GetFiles(directory);
-                    foreach (string item in Files)
+                    processDirectory(directory, SearchPattern);
+                    if (Directory.GetFiles(directory, SearchPattern).Length == 0 &&
+                        Directory.GetDirectories(directory).Length == 0)
                     {
-                        File.Delete(item);
+                        string[] Files = Directory.GetFiles(directory);
+                        foreach (string item in Files)
+                        {
+                            File.Delete(item);
+                        }
+                        Directory.Delete(directory, false);
                     }
-                    Directory.Delete(directory, false);
                 }
             }
+            catch { }
         }
         private static void ClearDirectory(string startLocation)
         {
@@ -675,7 +704,6 @@ namespace TitleSrv
             catch
             { }
         }
-
         private void Form1_Shown(object sender, EventArgs e)
         {
             button1_Click(null, null);
