@@ -692,12 +692,21 @@ namespace TitleSrv
                     {
                         if (File.GetCreationTime(directory).AddDays(SaveDays) < DateTime.Now)
                         {
-                            File.Delete(item);
+                            try
+                            {
+                                File.Delete(item);
+                            }
+                            catch { }
+                           
                         }
                     }
                     if (Directory.GetCreationTime(directory).AddDays(SaveDays) < DateTime.Now)
                     {
-                        Directory.Delete(directory, false);
+                        try
+                        {
+                            Directory.Delete(directory, false);
+                        }
+                        catch { }
                     }
                 }
             }
