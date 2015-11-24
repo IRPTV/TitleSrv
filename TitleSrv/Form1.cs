@@ -521,6 +521,8 @@ namespace TitleSrv
             Text = Text.Replace("“", "\"");
             Text = Text.Replace("”", "\"");
             Text = Text.Replace("�", "");
+            Text = Text.Replace("\r", "");
+            Text = Text.Replace("\n", "");
 
 
             //StreamWriter St = new StreamWriter("c:\\1.txt");
